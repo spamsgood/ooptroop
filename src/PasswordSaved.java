@@ -3,9 +3,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Scanner;
-
+//these import the drivers for mySQL to talk
 public class PasswordSaved {
 
+//this here is the login for my localhost MySQL DB instantce with the "PasswordManagerDB"
     private static final String URL = "jdbc:mysql://localhost:3306/PasswordManagerDB";
     private static final String USER = "root";
     private static final String PASSWORD = "P@ssw0rd";
