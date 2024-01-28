@@ -1,3 +1,6 @@
+/*
+
+
 package src.main;
 
 import java.sql.Connection;
@@ -5,7 +8,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-/*public class DatabasePasswordHistory {
+
+public class DatabasePasswordHistory {
 
     private static final String URL = "jdbc:mysql://localhost:3306/PasswordManagerDB";
     private static final String USER = "root";
@@ -54,4 +58,6 @@ import java.sql.SQLException;
         }
     }
 }
-/*
+
+
+*/
