@@ -1,4 +1,5 @@
 import javax.crypto.Cipher;
+import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -56,5 +57,17 @@ public class CryptoUtils {
 
         byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
         return new String(decryptedBytes);
+    }
+
+    // Method to generate a valid Base64-encoded AES key (for testing purposes)
+    public static String generateTestRecoveryCode() {
+        try {
+            KeyGenerator keyGen = KeyGenerator.getInstance("AES");
+            keyGen.init(128); // For AES-128
+            byte[] key = keyGen.generateKey().getEncoded();
+            return Base64.getEncoder().encodeToString(key);
+        } catch (Exception e) {
+            throw new RuntimeException("Error generating test recovery code", e);
+        }
     }
 }
