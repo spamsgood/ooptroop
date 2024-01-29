@@ -3,7 +3,6 @@ import java.util.Scanner;
 import javax.crypto.SecretKey;
 
 public class PasswordRetriever {
-
     private static final String URL = "jdbc:mysql://localhost:3306/PasswordManagerDB";
     private static final String USER = "root";
     private static final String PASSWORD = "P@ssw0rd";
