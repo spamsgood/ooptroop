@@ -1,18 +1,15 @@
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.Scanner;
+import javax.crypto.SecretKey;
 
 public class PasswordRetriever {
 
     private static final String URL = "jdbc:mysql://localhost:3306/PasswordManagerDB";
     private static final String USER = "root";
     private static final String PASSWORD = "P@ssw0rd";
+    private static final String TEST_RECOVERY_CODE = "MwpHq2KIJ7OxVhEacH0/5Q==";
 
-    // Method to retrieve and display password information based on site or username
-    public void retrievePassword(String input, String searchType) {
+    public void retrievePassword(String input, String searchType, SecretKey key) {
         String sql = "SELECT Site, Username, EncryptedPassword FROM Passwords WHERE " + searchType + " = ?";
 
         try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
@@ -27,9 +24,12 @@ public class PasswordRetriever {
                     String retrievedSite = rs.getString("Site");
                     String retrievedUsername = rs.getString("Username");
                     String retrievedEncryptedPassword = rs.getString("EncryptedPassword");
+
+                    String decryptedPassword = CryptoUtils.decrypt(retrievedEncryptedPassword, key);
+
                     System.out.println("Website: " + retrievedSite);
                     System.out.println("Username: " + retrievedUsername);
-                    System.out.println("Encrypted Password: " + retrievedEncryptedPassword);
+                    System.out.println("Decrypted Password: " + decryptedPassword);
                     System.out.println("-----------------------------------------");
                 }
 
@@ -39,6 +39,10 @@ public class PasswordRetriever {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+            System.out.println("SQL exception during password retrieval: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error during password retrieval: " + e.getMessage());
         }
     }
 
@@ -61,9 +65,53 @@ public class PasswordRetriever {
             input = scanner.nextLine();
         }
 
-        // Retrieve and display the password and website
-        passwordRetriever.retrievePassword(input, searchType);
+        // Master password verification
+        int masterPasswordAttempts = 0;
+        while (masterPasswordAttempts < 3) {
+            System.out.println("Enter Master Password:");
+            String enteredMasterPassword = scanner.nextLine();
+
+            if (checkMasterPassword(enteredMasterPassword)) {
+                // Proceed with password retrieval
+                SecretKey key = CryptoUtils.deriveKeyFromRecoveryCode(TEST_RECOVERY_CODE);
+                passwordRetriever.retrievePassword(input, searchType, key);
+                break;
+            } else {
+                System.out.println("Incorrect Master Password.");
+                masterPasswordAttempts++;
+            }
+        }
+
+        if (masterPasswordAttempts >= 3) {
+            // Call DeleteAllData method without confirmation check
+            DeleteAllData.forceDeleteAllData();
+        }
 
         scanner.close();
+    }
+
+    private static boolean checkMasterPassword(String enteredPassword) {
+        String sql = "SELECT EncryptedMasterPassword, RecoveryCode FROM Users WHERE Username = 'admin'";
+
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    String storedEncryptedPassword = rs.getString("EncryptedMasterPassword");
+                    String storedRecoveryCode = rs.getString("RecoveryCode");
+                    SecretKey key = CryptoUtils.deriveKeyFromRecoveryCode(storedRecoveryCode);
+                    String decryptedPassword = CryptoUtils.decrypt(storedEncryptedPassword, key);
+                    return decryptedPassword.equals(enteredPassword);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            System.out.println("SQL exception during password retrieval: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("Error during password retrieval: " + e.getMessage());
+        }
+        return false;
     }
 }
